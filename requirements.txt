@@ -1,0 +1,2 @@
+nltk==3.6.5
+rouge-metric==1.0.1
