@@ -17,6 +17,6 @@ Document Corpus --> Preprocessing --> multi-word terms --> compute tf-idf
                                 Best Scored summary                         
 """
 
-
 if __name__ == '__main__':
+    # Run test cases here
     print (1)
