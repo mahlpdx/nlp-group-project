@@ -20,3 +20,4 @@ Document Corpus --> Preprocessing --> multi-word terms --> compute tf-idf
 if __name__ == '__main__':
     # Run test cases here
     print (1)
+

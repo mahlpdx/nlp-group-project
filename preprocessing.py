@@ -1,4 +1,10 @@
 import nltk
+"""
+Functions to read in corpora.
+Functions to split corpora into train, validation (?), 
+and test sets.
+Functions to preprocess documents.
+"""
 
 def preprocess(document):
     """Preprocess a single document.

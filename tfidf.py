@@ -1,6 +1,8 @@
 import nltk
-
-TL = 1000 # value given in paper
+"""
+Functions to perform tf, idf for corpora.
+Functions to extract best summary from a document.
+"""
 
 def tf(word, document):
     """Calculate the tf of a word
@@ -12,17 +14,21 @@ def tf(word, document):
         (float): tf value
     """
 
-def idf(documents):
+
+def idf(documents, word):
     """Calculate the idf for a word
 
     Inputs:
-        documents (list<str>)
+        word (str): word
+        documents (list<str>): all documents
 
     Return:
         (float): idf value
     """
+    return 1
 
-def generate_terms(document):
+
+def generate_terms(document, n=1):
     """Generate all single and multi-word terms needed
     to generate tf-idf matrix
 
@@ -32,13 +38,41 @@ def generate_terms(document):
     with TL words.`
 
     Inputs:
+        n (int): maximumal number of words in a term
         document (str): document containing word
 
     Return:
         list<str>: list of all single and multi-word terms
+    """
+    return [""]
+
+
+def idf_mapping(documents):
+    """Create mapping for all terms to their idf scores
+
+    Inputs:
+        documents (list<str>): all documents in corprus   
+
+    Return:
+        {string: int}: mapping term -> idf value
+    """
+    return {}
+
+
+def rank_sequences(document):
+    """Rank all sequences of up to 1000 (we can make this smaller) words. 
+    Returned sequency is text summary.
+
+    Inputs:
+        document (str): document containing word
+
+    Return:
+        (str): highest ranked sequence AKA the summary
 
     """
+    return ""
+
 
 if __name__ == '__main__':
     # Run test cases here
-    print (1)
+    print(1)
