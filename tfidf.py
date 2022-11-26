@@ -4,7 +4,7 @@ Functions to perform tf, idf for corpora.
 Functions to extract best summary from a document.
 """
 
-
+# TF = > is TermFrequency
 def tf(term, document):
     """Calculate the tf of a term
     Inputs:
@@ -19,7 +19,7 @@ def tf(term, document):
     term_appearances = len(" ".join(document).split(term)) - 1
     return term_appearances / (document_length - term_length + 1)
 
-
+# IDF = > Inverse document frequency
 def idf(documents, term):
     """Calculate the idf for a term
 
@@ -168,6 +168,9 @@ def generate_summary(document, idf_map, seq_size, max_term_size):
 
     return ranked_sequences[0]
 
+def summarization(s):
+    summary = ' '.join(s)
+    return summary
 
 if __name__ == '__main__':
     # Run test cases here
@@ -199,4 +202,11 @@ if __name__ == '__main__':
     tf_map = tf_mapping(documents[0], 3)
 
     # Identify top ranking sequence as summary
-    print (generate_summary(documents[0], idf_map, 5, 3) )
+    summary = generate_summary(documents[0], idf_map, 5, 3)
+    
+    #join summary strings into one string to create a sentence  
+    s = summarization(summary[0])
+    
+    print (s)
+
+
