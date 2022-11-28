@@ -142,7 +142,6 @@ def preprocess(document):
     x = removePhoneNumbers(x)
     y = nltk.tokenize.word_tokenize(x)
     y = removeSpecials(y)
-    #y = removeStopWords(y, stop_words)
 
     return y
 

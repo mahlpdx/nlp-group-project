@@ -2,6 +2,10 @@ import numpy as np
 """
 Functions to perform tf, idf for corpora.
 Functions to extract best summary from a document.
+
+Authors:
+Drew Mahler
+Al Khatab Rashdi
 """
 
 # TF = > is TermFrequency
@@ -163,7 +167,7 @@ def generate_summary(document, tf_map, idf_map, seq_size, max_term_size):
     Returned sequency is text summary.
 
     Inputs:
-        document (list<str>): document containing word
+        document (list<str>): document containing tokens
         idf_mapping (dict[string -> float]): mapping term -> idf value
         seq_size (int): length of continuous sequences
         max_term_size (int): maximum number of tokens in a term
@@ -201,15 +205,16 @@ def generate_summary(document, tf_map, idf_map, seq_size, max_term_size):
                 # Add terms containig the ending words
                 new_term = " ".join(candidate_sequence[-term_size::])
                 candidate_score += tfidf(new_term, idf_map, tf_map)
+            
             if candidate_score > best_score:
                 best_score = candidate_score
                 best_sequence = candidate_sequence
             previous_score = candidate_score
-        
+    
     return best_sequence
 
 
-def summarization(s):
+def summary_str(s):
     summary = ' '.join(s)
     return summary
 
@@ -248,10 +253,10 @@ if __name__ == '__main__':
     tf_map = tf_mapping(documents[1], 3)
 
     # Identify top ranking sequence as summary
-    summary = generate_summary(documents[1], idf_map, 5, 3)
+    summary = generate_summary(documents[1], tf_map, idf_map, 5, 3)
     print (summary)
 
     # join summary strings into one string to create a sentence
-    s = summarization(summary[0])
+    s = summary_str(summary[0])
 
     print(s)

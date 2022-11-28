@@ -1,4 +1,5 @@
 from preprocessing import *
+from evaluation import *
 from tfidf import *
 import tensorflow_datasets as tfds
 import tensorflow as tf
@@ -23,10 +24,10 @@ Document Corpus --> Preprocessing --> multi-word terms --> compute tf-idf
 """
 
 if __name__ == '__main__':
-    # Load dataset
+    # 1.  Load dataset
     train, test = tfds.load(
         'multi_news',
-        split=['train[:1%]', 'test[:1%]']
+        split=['train[:100]', 'test[:100]']
     )
     train = [
         (ex['document'].numpy().decode("utf-8"),
@@ -39,7 +40,8 @@ if __name__ == '__main__':
         for ex in list(test)
     ]
 
-    # Preprocess documents to create text corpus
+    # 2. Preprocess documents to create text corpus
+    
     # Each sample contains multiple news articles so
     # we arbitrarily select the first one
     train_corpus = [
@@ -49,23 +51,34 @@ if __name__ == '__main__':
         preprocess(ex[0].split("|||||")[0]) for ex in test
     ] 
     
-    # Term size to be used for corpus
-    term_size = 1
+    # 3. Assign term size to be used for corpus
+    term_size = 3
 
-    # Load mapping of term to idf
+    # 4. Load mapping of term to idf
     print ("Processing idf_map...")
     idf_map = idf_mapping(train_corpus, term_size)
     print ("Completed idf map!")
 
-    # Loop through test set to generate summaries
+    # 5. Loop through test set to generate summaries
     print ("Generating summaries...")
     predicted_summaries = []
-    for i in range(5):
+
+    # Assign test size (number of samples)
+    test_size = 5
+    summary_size = 100
+    for i in range(test_size):
         tf_map = tf_mapping(test_corpus[i], term_size)
         predicted_summaries.append(
-            generate_summary(test_corpus[i], tf_map, idf_map, 1000, term_size)
+            generate_summary(test_corpus[i], tf_map, idf_map, summary_size, term_size)
         )
-    print ("Completed summaries...")
-
-    # Apply ROUGE evaluation to generated summaries
+    
+    print ("Completed summaries!")
+    print ("Metric evaluation...")
+    
+    # 6.  Apply ROUGE evaluation to generated summaries
+    # Currently only applying to a single sample
+    eval = Evaluation()
+    scores = eval.evaluation(summary_str(predicted_summaries[0]), test[0][1])
+    eval.score_display(scores)
+    print ("Completed evaluation!")
 
