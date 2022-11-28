@@ -26,7 +26,7 @@ if __name__ == '__main__':
     # Load dataset
     train, test = tfds.load(
         'multi_news',
-        split=['train[:20%]', 'test[:20%]']
+        split=['train[:1%]', 'test[:1%]']
     )
     train = [
         (ex['document'].numpy().decode("utf-8"),
@@ -40,5 +40,32 @@ if __name__ == '__main__':
     ]
 
     # Preprocess documents to create text corpus
-    corpus = [preprocess(ex[0]) for ex in train]
+    # Each sample contains multiple news articles so
+    # we arbitrarily select the first one
+    train_corpus = [
+        preprocess(ex[0].split("|||||")[0]) for ex in train
+    ]
+    test_corpus = [
+        preprocess(ex[0].split("|||||")[0]) for ex in test
+    ] 
+    
+    # Term size to be used for corpus
+    term_size = 1
+
+    # Load mapping of term to idf
+    print ("Processing idf_map...")
+    idf_map = idf_mapping(train_corpus, term_size)
+    print ("Completed idf map!")
+
+    # Loop through test set to generate summaries
+    print ("Generating summaries...")
+    predicted_summaries = []
+    for i in range(5):
+        tf_map = tf_mapping(test_corpus[i], term_size)
+        predicted_summaries.append(
+            generate_summary(test_corpus[i], tf_map, idf_map, 1000, term_size)
+        )
+    print ("Completed summaries...")
+
+    # Apply ROUGE evaluation to generated summaries
 
