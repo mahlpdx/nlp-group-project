@@ -146,10 +146,10 @@ def generate_sequences(document, seq_size):
 
 
 def tfidf(term, idf_map, tf_map):
-    """Calculate total tfidf score for a given sequence
+    """Calculate tfidf score for a given term
     
     Inputs:
-        sequence (list<str>): candidate summary
+        term (str): single or multi-word term
         idf_map (dict[string -> float]): mapping term -> idf value
         tf_map (dict[string -> float]): mapping term -> tf value
     
@@ -168,6 +168,7 @@ def generate_summary(document, tf_map, idf_map, seq_size, max_term_size):
 
     Inputs:
         document (list<str>): document containing tokens
+        tf_map (dict[string -> float]): mapping term -> tf value
         idf_mapping (dict[string -> float]): mapping term -> idf value
         seq_size (int): length of continuous sequences
         max_term_size (int): maximum number of tokens in a term
@@ -215,6 +216,13 @@ def generate_summary(document, tf_map, idf_map, seq_size, max_term_size):
 
 
 def summary_str(s):
+    """
+    Inputs:
+        s (list[str]): token representation of summary
+
+    Returns:
+        (str): string representation of summary
+    """
     summary = ' '.join(s)
     return summary
 
