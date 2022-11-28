@@ -2,9 +2,15 @@ import numpy as np
 """
 Functions to perform tf, idf for corpora.
 Functions to extract best summary from a document.
+
+Authors:
+Drew Mahler
+Al Khatab Rashdi
 """
 
 # TF = > is TermFrequency
+
+
 def tf(term, document):
     """Calculate the tf of a term
     Inputs:
@@ -20,6 +26,8 @@ def tf(term, document):
     return term_appearances / (document_length - term_length + 1)
 
 # IDF = > Inverse document frequency
+
+
 def idf(documents, term):
     """Calculate the idf for a term
 
@@ -85,11 +93,13 @@ def tf_mapping(document, max_term_size):
     tf_map = {}
     all_terms = set()
     for i in range(1, max_term_size+1):
-        all_terms.update(generate_terms(document, n=i))
+        all_terms.update(
+            generate_terms(document, n=i)
+        )
 
     for term in all_terms:
         tf_map[term] = tf(term, document)
-    
+
     return tf_map
 
 
@@ -103,7 +113,10 @@ def idf_mapping(documents, max_term_size):
     Return:
         dict[string -> float]: mapping term -> idf value
     """
-    idf_map = {}
+    idf_map = {"--test-only": np.log(len(documents)/1)}
+    # The above is used to handle the case where word is in test corpus
+    # but not in the training corpus
+
     all_terms = set()
     for document in documents:
         for i in range(1, max_term_size+1):
@@ -132,24 +145,30 @@ def generate_sequences(document, seq_size):
     return sequences
 
 
-def sequence_tfidf(sequence, idf_map, tf_map, max_term_size):
-    seq_terms = set()
-    for i in range(1, max_term_size+1):
-        seq_terms.update(generate_terms(sequence, n=i) )
-
-    total_tfidf = 0
-    for term in seq_terms:
-        total_tfidf += tf_map[term] * idf_map[term]
+def tfidf(term, idf_map, tf_map):
+    """Calculate tfidf score for a given term
     
-    return (sequence, total_tfidf)
+    Inputs:
+        term (str): single or multi-word term
+        idf_map (dict[string -> float]): mapping term -> idf value
+        tf_map (dict[string -> float]): mapping term -> tf value
+    
+    Return:
+        (float): total tfidf score
+    """
+    if term in idf_map:
+        return tf_map[term] * idf_map[term]
+    else:
+       return tf_map[term] * idf_map["--test-only"]
 
 
-def generate_summary(document, idf_map, seq_size, max_term_size):
-    """Rank all sequences of up to 1000 (we can make this smaller) words. 
+def generate_summary(document, tf_map, idf_map, seq_size, max_term_size):
+    """Rank all sequences of up to seq_size  words. 
     Returned sequency is text summary.
 
     Inputs:
-        document (list<str>): document containing word
+        document (list<str>): document containing tokens
+        tf_map (dict[string -> float]): mapping term -> tf value
         idf_mapping (dict[string -> float]): mapping term -> idf value
         seq_size (int): length of continuous sequences
         max_term_size (int): maximum number of tokens in a term
@@ -158,30 +177,70 @@ def generate_summary(document, idf_map, seq_size, max_term_size):
         (str): highest ranked sequence AKA the final summary
 
     """
-    sequences = generate_sequences(document, seq_size)
-    tf_map = tf_mapping(document, max_term_size)
-    ranked_sequences = sorted([
-        sequence_tfidf(seq, idf_map, tf_map, max_term_size) 
-        for seq in sequences
-    ], key=lambda x: x[1], reverse=True)
-    print (ranked_sequences)
+    best_score = previous_score = 0
+    best_sequence = None
+    # Loop through each possible sequence
+    for idx in range(seq_size, len(document)+1):
+        # Identify candidate sequence
+        candidate_sequence = document[idx-seq_size:idx]
+        # First sequence needs to calculate all tf-idf scores
+        if idx == seq_size:
+            candidate_score = 0
+            for term_size in range(1, max_term_size+1):
+                # Keep track of position
+                pos = 0
+                while pos+term_size < seq_size:
+                    term = " ".join(candidate_sequence[pos:pos+term_size])
+                    candidate_score += tfidf(term, idf_map, tf_map)
+                    pos += term_size
+            best_sequence = candidate_sequence
+            best_score = previous_score = candidate_score
+        
+        # All other sequences subtract terms from beginning and add terms from end
+        else:
+            candidate_score = previous_score
+            for term_size in range(1, max_term_size):
+                # Subtract terms containing the starting words
+                old_term = " ".join(document[idx-seq_size-1:idx-seq_size-1+term_size]) 
+                candidate_score -= tfidf(old_term, idf_map, tf_map)
+                # Add terms containig the ending words
+                new_term = " ".join(candidate_sequence[-term_size::])
+                candidate_score += tfidf(new_term, idf_map, tf_map)
+            
+            if candidate_score > best_score:
+                best_score = candidate_score
+                best_sequence = candidate_sequence
+            previous_score = candidate_score
+    
+    return best_sequence
 
-    return ranked_sequences[0]
 
-def summarization(s):
+def summary_str(s):
+    """
+    Inputs:
+        s (list[str]): token representation of summary
+
+    Returns:
+        (str): string representation of summary
+    """
     summary = ' '.join(s)
     return summary
+
 
 if __name__ == '__main__':
     # Run test cases here
     documents = [
-        ["I", "am", "a", "star", "I", "am", "everything", "that", "I", "want", "to", "be"],
-        ["The", "test", "is", "hard", "but", "I", "am", "what", "I", "want", "to", "be"],
-        ["What", "is", "is", "hard", "but", "is", "is", "what", "that", "dog", "to", "be"],
-        ["Crazy", "is", "blood", "not", "water", "she", "is", "what", "that", "dog", "to", "be"],
+        ["I", "am", "a", "star", "I", "am", "everything",
+            "that", "I", "want", "to", "be"],
+        ["The", "test", "is", "hard", "but", "I",
+            "am", "what", "I", "doggy", "kitty", "kookoo"],
+        ["What", "is", "is", "hard", "but", "is",
+            "is", "what", "that", "dog", "to", "be"],
+        ["Crazy", "is", "blood", "not", "water", "she",
+            "is", "what", "that", "dog", "to", "be"],
     ]
     # TF Example
-    print (tf("I", documents[0]))
+    print(tf("I", documents[0]))
 
     # Generate terms of length 1
     print(generate_terms(documents[0], n=1))
@@ -199,14 +258,13 @@ if __name__ == '__main__':
     idf_map = idf_mapping(documents, 3)
 
     # Generate tf mapping for a given document
-    tf_map = tf_mapping(documents[0], 3)
+    tf_map = tf_mapping(documents[1], 3)
 
     # Identify top ranking sequence as summary
-    summary = generate_summary(documents[0], idf_map, 5, 3)
-    
-    #join summary strings into one string to create a sentence  
-    s = summarization(summary[0])
-    
-    print (s)
+    summary = generate_summary(documents[1], tf_map, idf_map, 5, 3)
+    print (summary)
 
+    # join summary strings into one string to create a sentence
+    s = summary_str(summary[0])
 
+    print(s)
