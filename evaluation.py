@@ -1,38 +1,46 @@
-from rouge_metric import PyRouge
+from rouge import Rouge
 """
 Functions to evaluate generated and reference
-summaries with ROUGE metrics. 
+summaries with R.O.U.G.E metrics:
 
-Functions to calculate recall, precision and F-measure
-for each rouge metric. 
+Recall Oriented Understudy for Gisting Evaluation
 
-Using this library: https://pypi.org/project/rouge-metric/
-"""
-"""
-hypotheses = [
-    'how are you\ni am fine',  # document 1: hypothesis
-    'it is fine today\nwe won the football game',  # document 2: hypothesis
-]
-references = [[
-    'how do you do\nfine thanks',  # document 1: reference 1
-    'how old are you\ni am three',  # document 1: reference 2
-], [
-    'it is sunny today\nlet us go for a walk',  # document 2: reference 1
-    'it is a terrible day\nwe lost the game',  # document 2: reference 2
-]]
+Rouge is essentially comparing the match-rate of n-grams between our resultant model and the original text.
+
+Authors:
+Jingjing Zhao
+John Lorenz IV
 """
 
-def evaluation(hypotheses, references):
-    # Evaluate document-wise ROUGE scores
-    rouge = PyRouge(rouge_n=(1, 2, 4), rouge_l=True, rouge_w=True,
-                rouge_w_weight=1.2, rouge_s=True, rouge_su=True, skip_gap=4)
-    scores = rouge.evaluate(hypotheses, references)
-    print(scores)
+class Evaluation():
+    """
+    Utility class for computing F1, Precision, and Recall metrics for n-grams of summarization models.
+    """
+    def __init__(self):
+        pass
 
+    def evaluation(self, summary, original):
+        rouge = Rouge()
+        return rouge.get_scores(summary, original)
+
+    def score_display(self, rouge_scores):
+        iters = [1, 2, 3, 'l']
+        for i in iters:
+            idx = 'rouge-'+str(i)
+            try:
+                rouge_ngram = rouge_scores[0][idx]
+                print('#'*5, str(i)+'-gram metrics:','#'*5)
+                print('Recall:', rouge_ngram['r'],'\nF1 Score:', rouge_ngram['f'], '\nPrecision:', rouge_ngram['p'], '\n')      
+            except KeyError:
+                print(str(i)+'-gram metrics not available for this example.')
+
+    
 
 if __name__ == '__main__':
-    # Run test cases here
+    # To calculate scoring metrics, repeat the below using your own strings
+    eval = Evaluation()
     generated_summary = ['My name is jacob and I like water']
     reference_summary = ['My title is jacob and I enjoy drinking']
-
-    evaluation(generated_summary,reference_summary)
+    scores = eval.evaluation(generated_summary,reference_summary)
+    eval.score_display(scores)
+    
