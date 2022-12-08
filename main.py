@@ -1,7 +1,6 @@
 from preprocessing import *
 from evaluation import *
 from tfidf import *
-import sys
 import numpy as np
 
 """This is main script used to run the pipeline
@@ -24,8 +23,8 @@ Document Corpus --> Preprocessing --> multi-word terms --> compute tf-idf
 """
 """TO CHANGE EXPERIMENTAL SETUP MODIFY THE FOLLOWING"""
 TRAIN_SIZE = 100
-TEST_SIZE = 500
-TERM_SIZE = 2
+TEST_SIZE = 2000
+TERM_SIZE = 1
 SUMMARY_PCT = 0.05
 """MODIFY ABOVE"""
 
@@ -56,9 +55,9 @@ if __name__ == '__main__':
         tf_map = tf_mapping(test_documents[idx], TERM_SIZE)
         predicted_summaries.append(
             generate_summary(
-                test_documents[idx], 
-                tf_map, 
-                idf_map, 
+                test_documents[idx],
+                tf_map,
+                idf_map,
                 SUMMARY_PCT,
                 TERM_SIZE
             )

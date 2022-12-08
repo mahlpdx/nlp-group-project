@@ -146,4 +146,5 @@ if __name__ == '__main__':
     print(removePhoneNumbers(test_string))
     print(preprocess(test_string))
     train_documents, train_summaries, test_documents, test_summaries = load_multi_news(
-        10, 10)
+        10, 10
+    )
