@@ -1,4 +1,5 @@
 from rouge import Rouge
+from collections import namedtuple
 """
 Functions to evaluate generated and reference
 summaries with R.O.U.G.E metrics:
@@ -33,7 +34,6 @@ class Evaluation():
                 print('Recall:', rouge_ngram['r'],'\nF1 Score:', rouge_ngram['f'], '\nPrecision:', rouge_ngram['p'], '\n')      
             except KeyError:
                 print(str(i)+'-gram metrics not available for this example.')
-
     
 
 if __name__ == '__main__':
