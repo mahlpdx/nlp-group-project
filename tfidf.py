@@ -8,8 +8,6 @@ Drew Mahler
 Al Khatab Rashdi
 """
 
-# TF = > is TermFrequency
-
 
 def tf(term, document):
     """Calculate the tf of a term
@@ -147,22 +145,22 @@ def generate_sequences(document, seq_size):
 
 def tfidf(term, idf_map, tf_map):
     """Calculate tfidf score for a given term
-    
+
     Inputs:
         term (str): single or multi-word term
         idf_map (dict[string -> float]): mapping term -> idf value
         tf_map (dict[string -> float]): mapping term -> tf value
-    
+
     Return:
         (float): total tfidf score
     """
     if term in idf_map:
         return tf_map[term] * idf_map[term]
     else:
-       return tf_map[term] * idf_map["--test-only"]
+        return tf_map[term] * idf_map["--test-only"]
 
 
-def generate_summary(document, tf_map, idf_map, seq_size, max_term_size):
+def generate_summary(document, tf_map, idf_map, seq_pct, max_term_size):
     """Rank all sequences of up to seq_size  words. 
     Returned sequency is text summary.
 
@@ -177,6 +175,7 @@ def generate_summary(document, tf_map, idf_map, seq_size, max_term_size):
         (str): highest ranked sequence AKA the final summary
 
     """
+    seq_size = int(np.ceil(seq_pct * len(document)))
     best_score = previous_score = 0
     best_sequence = None
     # Loop through each possible sequence
@@ -195,23 +194,24 @@ def generate_summary(document, tf_map, idf_map, seq_size, max_term_size):
                     pos += term_size
             best_sequence = candidate_sequence
             best_score = previous_score = candidate_score
-        
+
         # All other sequences subtract terms from beginning and add terms from end
         else:
             candidate_score = previous_score
             for term_size in range(1, max_term_size):
                 # Subtract terms containing the starting words
-                old_term = " ".join(document[idx-seq_size-1:idx-seq_size-1+term_size]) 
+                old_term = " ".join(
+                    document[idx-seq_size-1:idx-seq_size-1+term_size])
                 candidate_score -= tfidf(old_term, idf_map, tf_map)
                 # Add terms containig the ending words
                 new_term = " ".join(candidate_sequence[-term_size::])
                 candidate_score += tfidf(new_term, idf_map, tf_map)
-            
+
             if candidate_score > best_score:
                 best_score = candidate_score
                 best_sequence = candidate_sequence
             previous_score = candidate_score
-    
+
     return best_sequence
 
 
@@ -261,10 +261,10 @@ if __name__ == '__main__':
     tf_map = tf_mapping(documents[1], 3)
 
     # Identify top ranking sequence as summary
-    summary = generate_summary(documents[1], tf_map, idf_map, 5, 3)
-    print (summary)
+    summary = generate_summary(documents[1], tf_map, idf_map, 0.5, 3)
+    print(summary)
 
     # join summary strings into one string to create a sentence
-    s = summary_str(summary[0])
+    s = summary_str(summary)
 
     print(s)

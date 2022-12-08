@@ -1,8 +1,7 @@
 from preprocessing import *
 from evaluation import *
 from tfidf import *
-import tensorflow_datasets as tfds
-import tensorflow as tf
+import numpy as np
 
 """This is main script used to run the pipeline
 
@@ -22,63 +21,88 @@ Document Corpus --> Preprocessing --> multi-word terms --> compute tf-idf
                                          V
                                 Best scored summary                         
 """
+"""TO CHANGE EXPERIMENTAL SETUP MODIFY THE FOLLOWING"""
+TRAIN_SIZE = 100
+TEST_SIZE = 2000
+TERM_SIZE = 1
+SUMMARY_PCT = 0.05
+"""MODIFY ABOVE"""
 
 if __name__ == '__main__':
-    # 1.  Load dataset
-    train, test = tfds.load(
-        'multi_news',
-        split=['train[:100]', 'test[:100]']
+    # Experimental setup
+    print("""
+    EXPERIMENT SETUP:
+        Training Size: {}
+        Test Size: {}
+        Term Size: {}
+        Summary Percent: {}
+    """.format(TRAIN_SIZE, TEST_SIZE, TERM_SIZE, SUMMARY_PCT))
+
+    # 1. Load dataset
+    train_documents, train_summaries, test_documents, test_summaries = load_multi_news(
+        TRAIN_SIZE, TEST_SIZE
     )
-    train = [
-        (ex['document'].numpy().decode("utf-8"),
-        ex['summary'].numpy().decode("utf-8") )
-        for ex in list(train)
-    ]
-    test = [
-        (ex['document'].numpy().decode("utf-8"),
-        ex['summary'].numpy().decode("utf-8") )
-        for ex in list(test)
-    ]
 
-    # 2. Preprocess documents to create text corpus
-    
-    # Each sample contains multiple news articles so
-    # we arbitrarily select the first one
-    train_corpus = [
-        preprocess(ex[0].split("|||||")[0]) for ex in train
-    ]
-    test_corpus = [
-        preprocess(ex[0].split("|||||")[0]) for ex in test
-    ] 
-    
-    # 3. Assign term size to be used for corpus
-    term_size = 3
+    # 2. Load mapping of term to idf
+    print("Processing idf_map...")
+    idf_map = idf_mapping(train_documents, TERM_SIZE)
+    print("Completed idf map!")
 
-    # 4. Load mapping of term to idf
-    print ("Processing idf_map...")
-    idf_map = idf_mapping(train_corpus, term_size)
-    print ("Completed idf map!")
-
-    # 5. Loop through test set to generate summaries
-    print ("Generating summaries...")
+    # 3. Generate summaries of given size
+    print("Generating summaries...")
     predicted_summaries = []
-
-    # Assign test size (number of samples)
-    test_size = 5
-    summary_size = 100
-    for i in range(test_size):
-        tf_map = tf_mapping(test_corpus[i], term_size)
+    for idx in range(TEST_SIZE):
+        tf_map = tf_mapping(test_documents[idx], TERM_SIZE)
         predicted_summaries.append(
-            generate_summary(test_corpus[i], tf_map, idf_map, summary_size, term_size)
+            generate_summary(
+                test_documents[idx],
+                tf_map,
+                idf_map,
+                SUMMARY_PCT,
+                TERM_SIZE
+            )
         )
-    
-    print ("Completed summaries!")
-    print ("Metric evaluation...")
-    
-    # 6.  Apply ROUGE evaluation to generated summaries
-    # Currently only applying to a single sample
-    eval = Evaluation()
-    scores = eval.evaluation(summary_str(predicted_summaries[0]), test[0][1])
-    eval.score_display(scores)
-    print ("Completed evaluation!")
+    print("Completed summaries...")
 
+    # 4. Apply ROUGE evaluation to generated summaries
+    print("Metric evaluation...")
+    eval = Evaluation()
+    all_scores = []
+    for idx in range(len(predicted_summaries)):
+        print(idx)
+        score = eval.evaluation(
+            summary_str(predicted_summaries[idx]),
+            summary_str(test_summaries[idx])
+        )[0]
+        all_scores.append(
+            RougeStats(
+                score['rouge-1']['r'],
+                score['rouge-1']['p'],
+                score['rouge-1']['f'],
+                score['rouge-2']['r'],
+                score['rouge-2']['p'],
+                score['rouge-2']['f'],
+                score['rouge-l']['r'],
+                score['rouge-l']['p'],
+                score['rouge-l']['f']
+            )
+        )
+
+    # Determine averages for all metrics
+    average_scores = RougeStats(
+        np.average([s.r1 for s in all_scores]),
+        np.average([s.p1 for s in all_scores]),
+        np.average([s.f1 for s in all_scores]),
+        np.average([s.r2 for s in all_scores]),
+        np.average([s.p2 for s in all_scores]),
+        np.average([s.f2 for s in all_scores]),
+        np.average([s.rl for s in all_scores]),
+        np.average([s.pl for s in all_scores]),
+        np.average([s.fl for s in all_scores]),
+    )
+
+    print("Average scores for summary percentage of {} and test size of {}:".format(
+        SUMMARY_PCT, TEST_SIZE
+    ))
+    print(average_scores)
+    print("Experiment complete!")

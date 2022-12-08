@@ -1,4 +1,6 @@
 from rouge import Rouge
+from collections import namedtuple
+import sys
 """
 Functions to evaluate generated and reference
 summaries with R.O.U.G.E metrics:
@@ -21,6 +23,7 @@ class Evaluation():
 
     def evaluation(self, summary, original):
         rouge = Rouge()
+        sys.setrecursionlimit(len(summary) * len(original) + 10)
         return rouge.get_scores(summary, original)
 
     def score_display(self, rouge_scores):
@@ -34,7 +37,7 @@ class Evaluation():
             except KeyError:
                 print(str(i)+'-gram metrics not available for this example.')
 
-    
+RougeStats = namedtuple("RougeStats", "r1 p1 f1 r2 p2 f2 rl pl fl")
 
 if __name__ == '__main__':
     # To calculate scoring metrics, repeat the below using your own strings

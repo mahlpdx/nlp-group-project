@@ -9,6 +9,7 @@ import string
 import re
 import csv
 import random
+import tensorflow_datasets as tfds
 
 
 """
@@ -18,62 +19,8 @@ and test sets.
 Functions to preprocess documents.
 """
 
-CORPUS_FILE_PATH = "linux.csv"
-
 nltk.download('punkt')
 
-def readCorpora(corpora):
-    """Reads in the corpora.
-
-    Loops through the dictionary and calls preprocess on each document, 
-    storing the processed documents in a new dictionary.
-
-    man_entry,tldr_summary  
-
-    Inputs:
-        corpora (str): file path
-
-    Return:
-        (list<str>, str): processed corpora (tokens, summary)
-
-    """
-    output = []
-    csv.field_size_limit(csv.field_size_limit() * 10)
- 
-    with open(CORPUS_FILE_PATH, encoding='utf8') as csvfile:
-        reader = csv.DictReader(csvfile, delimiter=',')
-        temp = []
-        count = 0
-        for row in reader:
-            if not row["man_entry"]:
-                count += 1
-                continue
-            temp = preprocess(row["man_entry"])
-            output.append((temp, row['tldr_summary']))
-    
-        print("number of empty man_entry:", count)
-        return output
-
-
-def splitData(data, train=.75, mixup=True):
-    """Splits data into train, validation (?), and test sets.
-
-    Inputs:
-        data list<(list<str>, str)>: processed documents
-        train float: [0, 1] percentage of dataset to use as train set
-        mixup bool: Shuffle the dataset
-
-    Return:
-        (list<(tokens, summary)>), (list<(tokens, summary)>) train, test
-
-    """
-    temp = data
-
-    if mixup:
-        random.shuffle(temp)
-    
-    x = int(len(temp) * train)
-    return temp[:x], temp[x:]
 
 def removeSpecials(document):
     """Removes special characters from string
@@ -145,17 +92,59 @@ def preprocess(document):
 
     return y
 
+
+def load_multi_news(train_size, test_size):
+    """Load and preprocess multi news dataset
+
+    """
+    # 1.  Load dataset
+    train, test = tfds.load(
+        'multi_news',
+        split=[
+            'train[:{}]'.format(train_size),
+            'test[:{}]'.format(test_size)
+        ]
+    )
+
+    train_documents = [
+        preprocess(
+            ex['document'].numpy().decode("utf-8").split("|||||")[0]
+        )
+        for ex in list(train)
+    ]
+
+    train_summaries = [
+        preprocess(
+            ex['summary'].numpy().decode("utf-8").split("|||||")[0]
+        )
+        for ex in list(train)
+    ]
+
+    test_documents = [
+        preprocess(
+            ex['document'].numpy().decode("utf-8").split("|||||")[0]
+        )
+        for ex in list(test)
+    ]
+
+    test_summaries = [
+        preprocess(
+            ex['summary'].numpy().decode("utf-8").split("|||||")[0]
+        )
+        for ex in list(test)
+    ]
+
+    return train_documents, train_summaries, test_documents, test_summaries
+
+
 if __name__ == '__main__':
     # Run test cases here
     test_string = "test@hotmail.org is dog the (555) 555-5555 this n#kj&sal9(! 555-555-5555"
     test_string_two = "dog (555) 555-5555 test@hotmail.org n#kj&sal9(! test@hotmail.org"
-    """ print(removeEmails(test_string))
+    print(removeEmails(test_string))
     print(removeEmails(test_string_two))
     print(removePhoneNumbers(test_string))
-    print(preprocess(test_string)) """
-    data = readCorpora(CORPUS_FILE_PATH)
-    print("len of data", len(data))
-    train, test = splitData(data)
-
-    print("len of train:", len(train))
-    print("len of test:", len(test))
+    print(preprocess(test_string))
+    train_documents, train_summaries, test_documents, test_summaries = load_multi_news(
+        10, 10
+    )
