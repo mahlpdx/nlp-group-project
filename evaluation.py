@@ -34,7 +34,8 @@ class Evaluation():
                 print('Recall:', rouge_ngram['r'],'\nF1 Score:', rouge_ngram['f'], '\nPrecision:', rouge_ngram['p'], '\n')      
             except KeyError:
                 print(str(i)+'-gram metrics not available for this example.')
-    
+
+RougeStats = namedtuple("RougeStats", "r1 p1 f1 r2 p2 f2 rl pl fl")
 
 if __name__ == '__main__':
     # To calculate scoring metrics, repeat the below using your own strings
