@@ -159,6 +159,19 @@ def tfidf(term, idf_map, tf_map):
     else:
         return tf_map[term] * idf_map["--test-only"]
 
+def baseline_summary(document, seq_pct):
+    """Abitrarily chooses the first seq_pct * document_length words
+    
+     Inputs:
+        document (list<str>): document containing tokens
+        seq_pct (float): length of continuous sequences as percent of doc length
+
+    Return:
+        (str): baseline summary
+
+    """
+    seq_size = int(np.ceil(seq_pct * len(document)))
+    return document[0:seq_size]
 
 def generate_summary(document, tf_map, idf_map, seq_pct, max_term_size):
     """Rank all sequences of up to seq_size  words. 
@@ -168,7 +181,7 @@ def generate_summary(document, tf_map, idf_map, seq_pct, max_term_size):
         document (list<str>): document containing tokens
         tf_map (dict[string -> float]): mapping term -> tf value
         idf_mapping (dict[string -> float]): mapping term -> idf value
-        seq_size (int): length of continuous sequences
+        seq_pct (float): length of continuous sequences as percent of doc length
         max_term_size (int): maximum number of tokens in a term
 
     Return:
@@ -198,7 +211,7 @@ def generate_summary(document, tf_map, idf_map, seq_pct, max_term_size):
         # All other sequences subtract terms from beginning and add terms from end
         else:
             candidate_score = previous_score
-            for term_size in range(1, max_term_size):
+            for term_size in range(1, max_term_size+1):
                 # Subtract terms containing the starting words
                 old_term = " ".join(
                     document[idx-seq_size-1:idx-seq_size-1+term_size])

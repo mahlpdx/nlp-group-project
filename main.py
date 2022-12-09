@@ -21,12 +21,20 @@ Document Corpus --> Preprocessing --> multi-word terms --> compute tf-idf
                                          V
                                 Best scored summary                         
 """
-"""TO CHANGE EXPERIMENTAL SETUP MODIFY THE FOLLOWING"""
-TRAIN_SIZE = 100
+"""TO CHANGE EXPERIMENTAL SETUP MODIFY THE FOLLOWING
+
+TRAIN_SIZE: Size of the training set
+TEST_SIZE: Size of the test set
+TERM_SIZE: Size of the multi-word term
+SUMMARY_PCT: Percentage of total document length to use for summary
+BASELINE_ON: If set to true, calculate a baseline summary. If
+            set to false, calculate summary via tf-idf method. 
+"""
+TRAIN_SIZE = 500
 TEST_SIZE = 2000
-TERM_SIZE = 1
-SUMMARY_PCT = 0.05
-"""MODIFY ABOVE"""
+TERM_SIZE = 2
+SUMMARY_PCT = 0.1
+BASELINE_ON = False
 
 if __name__ == '__main__':
     # Experimental setup
@@ -53,13 +61,18 @@ if __name__ == '__main__':
     predicted_summaries = []
     for idx in range(TEST_SIZE):
         tf_map = tf_mapping(test_documents[idx], TERM_SIZE)
-        predicted_summaries.append(
-            generate_summary(
-                test_documents[idx],
-                tf_map,
-                idf_map,
-                SUMMARY_PCT,
-                TERM_SIZE
+        if BASELINE_ON:
+            predicted_summaries.append(
+                baseline_summary(test_documents[idx], SUMMARY_PCT)
+            )
+        else:
+            predicted_summaries.append(
+                generate_summary(
+                    test_documents[idx],
+                    tf_map,
+                    idf_map,
+                    SUMMARY_PCT,
+                    TERM_SIZE
             )
         )
     print("Completed summaries...")
